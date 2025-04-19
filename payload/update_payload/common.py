@@ -25,7 +25,7 @@ from update_payload.error import PayloadError
 #
 # Constants.
 #
-PSEUDO_EXTENT_MARKER = (1L << 64) - 1  # UINT64_MAX
+PSEUDO_EXTENT_MARKER = (1 << 64) - 1  # UINT64_MAX
 
 SIG_ASN1_HEADER = (
     '\x30\x31\x30\x0d\x06\x09\x60\x86'
