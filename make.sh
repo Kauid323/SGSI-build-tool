@@ -2,8 +2,8 @@
 
 # Copyright (C) 2020 Xiaoxindada <2245062854@qq.com>
 
-LOCALDIR=`cd "$( dirname $0 )" && pwd`
-cd $LOCALDIR
+LOCALDIR=$(cd "$(dirname "$0")" && pwd)
+cd "$LOCALDIR"
 source ./bin.sh
 
 Usage() {
@@ -32,9 +32,9 @@ read -p "请输入需要解压的zip: " zip
 zip=$(echo "$zip" | tr -d '"' | tr -d "'")
 echo "解压刷机包中..."
 
-if [ -e ./tmp/$zip ];then
+if [ -e ./tmp/"$zip" ];then
   7z x "./tmp/$zip" -o"./tmp/"
-elif [ -e $zip ];then
+elif [ -e "$zip" ];then
   7z x "$zip" -o"./tmp/"
 else
   echo "当前zip不存在！"
@@ -47,32 +47,14 @@ if [ -e './payload.bin' ];then
   mv ./payload.bin ../payload
   echo "解压payload.bin中..."
   cd ../payload
-  python2 ./payload.py ./payload.bin ./out
+  python3 ./payload.py ./payload.bin ./out
   mv ./payload.bin ../tmp
   echo "移动img至输出目录..."
-  if [ -e "./out/product.img" ];then
-    mv ./out/product.img ../tmp/
-  fi
- 
-  if [ -e "./out/system_ext.img" ];then
-    mv ./out/system_ext.img ../tmp/
-  fi
-
-  if [ -e "./out/reserve.img" ];then
-    mv ./out/reserve.img ../tmp/
-  fi
-
-  if [ -e "./out/odm.img" ];then
-    mv ./out/odm.img ../tmp/
-  fi  
- 
-  if [ -e "./out/boot.img" ];then
-    mv ./out/boot.img ../tmp/
-  fi  
-  
-  if [ -e "./out/vendor_boot.img" ];then
-    mv ./out/vendor_boot.img ../tmp/
-  fi  
+  for img in product system_ext reserve odm boot vendor_boot; do
+    if [ -e "./out/${img}.img" ];then
+      mv "./out/${img}.img" ../tmp/
+    fi
+  done
   mv ./out/system.img ../tmp/
   mv ./out/vendor.img ../tmp/
   rm -rf ./out/*
@@ -80,29 +62,11 @@ if [ -e './payload.bin' ];then
   mv ./system.img ../
   mv ./vendor.img ../
 
-  if [ -e "./product.img" ];then
-    mv ./product.img ../
-  fi
-
-  if [ -e "./system_ext.img" ];then
-    mv ./system_ext.img ../
-  fi
- 
-  if [ -e "./reserve.img" ];then
-    mv ./reserve.img ../
-  fi
-  
-  if [ -e "./odm.img" ];then
-    mv ./odm.img ../
-  fi    
-
-  if [ -e "./boot.img" ];then
-    mv ./boot.img ../
-  fi
-  
-  if [ -e "./vendor_boot.img" ];then
-    mv ./vendor_boot.img ../
-  fi  
+  for img in product system_ext reserve odm boot vendor_boot; do
+    if [ -e "./${img}.img" ];then
+      mv "./${img}.img" ../
+    fi
+  done
   echo "转换完成"
 fi
 
@@ -110,114 +74,46 @@ fi
 if [ -e ./system.new.dat.br ];then
    echo "正在解压system.new.dat.br"
    $bin/brotli -d system.new.dat.br
-   python $bin/sdat2img.py system.transfer.list system.new.dat ./system.img
+   python3 $bin/sdat2img.py system.transfer.list system.new.dat ./system.img
    mv ./system.img ../
    rm -rf ./system.new.dat
 
-  if [ -e ./vendor.new.dat.br ];then
-    echo "正在解压vendor.new.br"
-    $bin/brotli -d vendor.new.dat.br
-    python $bin/sdat2img.py vendor.transfer.list vendor.new.dat ./vendor.img
-    mv ./vendor.img ../
-    rm -rf ./vendor.new.dat 
-  fi
-
-  if [ -e ./product.new.dat.br ];then
-    echo "正在解压product.new.br"
-    $bin/brotli -d product.new.dat.br
-    python $bin/sdat2img.py product.transfer.list product.new.dat ./product.img
-    mv ./product.img ../
-    rm -rf ./product.new.dat
-  fi
-
-  if [ -e ./system_ext.new.dat.br ];then
-    echo "正在解压system_ext.new.dat.br"
-    $bin/brotli -d system_ext.new.dat.br
-    python $bin/sdat2img.py system_ext.transfer.list system_ext.new.dat ./system_ext.img
-    mv ./system_ext.img ../
-    rm -rf ./system_ext.new.dat
-  fi
-
-  if [ -e ./odm.new.dat.br ];then
-    echo "正在解压odm.new.dat.br"
-    $bin/brotli -d odm.new.dat.br
-    python $bin/sdat2img.py odm.transfer.list odm.new.dat ./odm.img
-    mv ./odm.img ../
-    rm -rf ./odm.new.dat
-  fi
+  for img in vendor product system_ext odm; do
+    if [ -e ./${img}.new.dat.br ];then
+      echo "正在解压${img}.new.dat.br"
+      $bin/brotli -d ${img}.new.dat.br
+      python3 $bin/sdat2img.py ${img}.transfer.list ${img}.new.dat ./${img}.img
+      mv ./${img}.img ../
+      rm -rf ./${img}.new.dat
+    fi
+  done
 fi
 
 # dat检测
 if [ -e ./system.new.dat.1 ];then
   echo "检测到分段system.new.dat，正在合并"
-  if [ -e ./system.new.dat.1 ];then
-    cat ./system.new.dat.{1..999} 2>/dev/null >> ./system.new.dat
-    rm -rf ./system.new.dat.{1..999}
-    python $bin/sdat2img.py system.transfer.list system.new.dat ./system.img
-    mv ./system.img ../
-  fi
+  cat ./system.new.dat.{1..999} 2>/dev/null >> ./system.new.dat
+  rm -rf ./system.new.dat.{1..999}
+  python3 $bin/sdat2img.py system.transfer.list system.new.dat ./system.img
+  mv ./system.img ../
 
-  if [ -e ./vendor.new.dat.1 ];then
-    echo "检测到分段vendor.new.dat，正在合并"
-    cat ./vendor.new.dat.{1..999} 2>/dev/null >> ./vendor.new.dat
-    rm -rf ./vendor.new.dat.{1..999}
-    python $bin/sdat2img.py vendor.transfer.list vendor.new.dat ./vendor.img
-    mv ./vendor.img ../
-  fi
-
-  if [ -e ./product.new.dat.1 ];then
-    echo "检测到分段product.new.dat，正在合并"
-    cat ./product.new.dat.{1..999} 2>/dev/null >> ./product.new.dat
-    rm -rf ./product.new.dat.{1..999}
-    python $bin/sdat2img.py product.transfer.list product.new.dat ./product.img
-    mv ./product.img ../
-  fi
-
-  if [ -e ./system_ext.new.dat.1 ];then
-    echo "检测到分段system_ext.new.dat，正在合并"
-    cat ./system_ext.new.dat.{1..999} 2>/dev/null >> ./system_ext.new.dat
-    rm -rf ./product.new.dat.{1..999}
-    python $bin/sdat2img.py system_ext.transfer.list system_ext.new.dat ./system_ext.img
-    mv ./system_ext.img ../
-  fi  
-
-  if [ -e ./odm.new.dat.1 ];then
-    echo "检测到分段odm.new.dat，正在合并"
-    cat ./odm.new.dat.{1..999} 2>/dev/null >> ./odm.new.dat
-    rm -rf ./odm.new.dat.{1..999}
-    python $bin/sdat2img.py odm.transfer.list odm.new.dat ./odm.img
-    mv ./odm.img ../
-  fi    
+  for img in vendor product system_ext odm; do
+    if [ -e ./${img}.new.dat.1 ];then
+      echo "检测到分段${img}.new.dat，正在合并"
+      cat ./${img}.new.dat.{1..999} 2>/dev/null >> ./${img}.new.dat
+      rm -rf ./${img}.new.dat.{1..999}
+      python3 $bin/sdat2img.py ${img}.transfer.list ${img}.new.dat ./${img}.img
+      mv ./${img}.img ../
+    fi
+  done
 else
-  if [ -e ./system.new.dat ];then
-    echo "正在解压system.new.dat"
-    python $bin/sdat2img.py system.transfer.list system.new.dat ./system.img
-    mv ./system.img ../
-  fi
-  
-  if [ -e ./vendor.new.dat ];then
-    echo "正在解压vendor.new.dat"
-    python $bin/sdat2img.py vendor.transfer.list vendor.new.dat ./vendor.img
-    mv ./vendor.img ../
-  fi
-
-  if [ -e ./product.new.dat ];then
-    echo "正在解压product.new.dat"
-    python $bin/sdat2img.py product.transfer.list product.new.dat ./product.img
-    mv ./product.img ../
-  fi
- 
-  if [ -e ./system_ext.new.dat ];then
-    echo "正在解压system_ext.new.dat"
-    python $bin/sdat2img.py system_ext.transfer.list system_ext.new.dat ./system_ext.img
-    mv ./system_ext.img ../
-  fi
-
- if [ -e ./odm.new.dat ];then
-   echo "正在解压odm.new.dat"
-   python $bin/sdat2img.py odm.transfer.list odm.new.dat ./odm.img
-   mv ./odm.img ../
-  fi
+  for img in system vendor product system_ext odm; do
+    if [ -e ./${img}.new.dat ];then
+      echo "正在解压${img}.new.dat"
+      python3 $bin/sdat2img.py ${img}.transfer.list ${img}.new.dat ./${img}.img
+      mv ./${img}.img ../
+    fi
+  done
 fi
 
 #img检测
@@ -225,7 +121,139 @@ if [ -e ./system.img ];then
   mv ./*.img ../
 fi
 
-cd $LOCALDIR
+cd "$LOCALDIR"
+
+make_type=$1
+if [ -e ./system.img ];then
+  case $make_type in
+    "A"|"a") 
+      ./SGSI.sh "A"
+      ./workspace_cleanup.sh
+      exit 0
+#!/bin/bash
+
+# Copyright (C) 2020 Xiaoxindada <2245062854@qq.com>
+
+LOCALDIR=$(cd "$(dirname "$0")" && pwd)
+cd "$LOCALDIR"
+source ./bin.sh
+
+Usage() {
+cat <<EOT
+Usage:
+$0 AB|ab or $0 A|a
+EOT
+}
+
+case $1 in 
+  "AB"|"ab"|"A"|"a")
+    ;;
+  *)
+    Usage
+    exit 1
+    ;;
+esac
+
+echo "环境初始化中 请稍候..."
+mkdir -p ./tmp
+chmod -R 777 ./
+rm -rf ./*.img
+./workspace_cleanup.sh > /dev/null 2>&1
+echo "初始化环境完成"
+read -p "请输入需要解压的zip: " zip
+zip=$(echo "$zip" | tr -d '"' | tr -d "'")
+echo "解压刷机包中..."
+
+if [ -e ./tmp/"$zip" ];then
+  7z x "./tmp/$zip" -o"./tmp/"
+elif [ -e "$zip" ];then
+  7z x "$zip" -o"./tmp/"
+else
+  echo "当前zip不存在！"
+  exit 1
+fi
+
+cd ./tmp
+# payload.bin检测
+if [ -e './payload.bin' ];then
+  mv ./payload.bin ../payload
+  echo "解压payload.bin中..."
+  cd ../payload
+  python3 ./payload.py ./payload.bin ./out
+  mv ./payload.bin ../tmp
+  echo "移动img至输出目录..."
+  for img in product system_ext reserve odm boot vendor_boot; do
+    if [ -e "./out/${img}.img" ];then
+      mv "./out/${img}.img" ../tmp/
+    fi
+  done
+  mv ./out/system.img ../tmp/
+  mv ./out/vendor.img ../tmp/
+  rm -rf ./out/*
+  cd ../tmp
+  mv ./system.img ../
+  mv ./vendor.img ../
+
+  for img in product system_ext reserve odm boot vendor_boot; do
+    if [ -e "./${img}.img" ];then
+      mv "./${img}.img" ../
+    fi
+  done
+  echo "转换完成"
+fi
+
+# br检测
+if [ -e ./system.new.dat.br ];then
+   echo "正在解压system.new.dat.br"
+   $bin/brotli -d system.new.dat.br
+   python3 $bin/sdat2img.py system.transfer.list system.new.dat ./system.img
+   mv ./system.img ../
+   rm -rf ./system.new.dat
+
+  for img in vendor product system_ext odm; do
+    if [ -e ./${img}.new.dat.br ];then
+      echo "正在解压${img}.new.dat.br"
+      $bin/brotli -d ${img}.new.dat.br
+      python3 $bin/sdat2img.py ${img}.transfer.list ${img}.new.dat ./${img}.img
+      mv ./${img}.img ../
+      rm -rf ./${img}.new.dat
+    fi
+  done
+fi
+
+# dat检测
+if [ -e ./system.new.dat.1 ];then
+  echo "检测到分段system.new.dat，正在合并"
+  cat ./system.new.dat.{1..999} 2>/dev/null >> ./system.new.dat
+  rm -rf ./system.new.dat.{1..999}
+  python3 $bin/sdat2img.py system.transfer.list system.new.dat ./system.img
+  mv ./system.img ../
+
+  for img in vendor product system_ext odm; do
+    if [ -e ./${img}.new.dat.1 ];then
+      echo "检测到分段${img}.new.dat，正在合并"
+      cat ./${img}.new.dat.{1..999} 2>/dev/null >> ./${img}.new.dat
+      rm -rf ./${img}.new.dat.{1..999}
+      python3 $bin/sdat2img.py ${img}.transfer.list ${img}.new.dat ./${img}.img
+      mv ./${img}.img ../
+    fi
+  done
+else
+  for img in system vendor product system_ext odm; do
+    if [ -e ./${img}.new.dat ];then
+      echo "正在解压${img}.new.dat"
+      python3 $bin/sdat2img.py ${img}.transfer.list ${img}.new.dat ./${img}.img
+      mv ./${img}.img ../
+    fi
+  done
+fi
+
+#img检测
+if [ -e ./system.img ];then
+  mv ./*.img ../
+fi
+
+cd "$LOCALDIR"
 
 make_type=$1
 if [ -e ./system.img ];then
