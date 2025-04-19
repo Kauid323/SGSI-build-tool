@@ -146,7 +146,7 @@ def Read(file_obj, length, offset=None, hasher=None):
 
   try:
     data = file_obj.read(length)
-  except IOError, e:
+  except IOError as e:
     raise PayloadError('error reading from file (%s): %s' % (file_obj.name, e))
 
   if len(data) != length:
